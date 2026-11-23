@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS IPA</title>
+    <!-- Memuat Tailwind CSS untuk tata letak responsif dan bersih -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Memuat font Inter untuk tipografi yang tegas dan modern -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Memastikan latar belakang putih murni dan menghilangkan margin bawaan */
+        html, body {
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-white flex items-center justify-center min-h-screen p-2 sm:p-4 overflow-x-hidden">
+
+    <!-- Kontainer utama untuk menampilkan poster secara utuh dan terpusat -->
+    <main id="login-view" class="w-full max-w-4xl flex flex-col items-center justify-center">
+        
+        <!-- Pembungkus relatif agar teks dapat diposisikan tepat di atas area gambar -->
+        <div class="relative inline-block max-w-full">
+            <!-- Gambar poster utama dengan penanganan error jika gambar gagal dimuat -->
+            <img 
+                src="https://i.ibb.co.com/MyQ5TwpJ/web-urip.jpg" 
+                alt="web urip" 
+                class="block w-auto h-auto max-w-full max-h-[95vh] object-contain select-none"
+                onerror="handleImageError(this)"
+            >
+
+            <!-- Lapisan teks judul di bagian kanan depan gambar dengan warna gradasi -->
+            <div id="poster-overlay-text" class="absolute inset-y-0 right-0 w-3/5 sm:w-1/2 flex flex-col items-end justify-center pr-3 sm:pr-8 md:pr-12 gap-2.5 sm:gap-4">
+                <h1 class="text-right font-extrabold text-base sm:text-2xl md:text-3xl lg:text-4xl leading-tight tracking-tight bg-gradient-to-r from-blue-600 via-teal-500 to-emerald-500 bg-clip-text text-transparent drop-shadow-sm pointer-events-none">
+                    Konsumsi Daya Listrik<br>dan Biayanya
+                </h1>
+
+                <!-- Form Glassmorphism Horizontal untuk memasukkan NIS -->
+                <form onsubmit="handleNisSubmit(event)" class="w-full max-w-[240px] sm:max-w-sm bg-white/40 backdrop-blur-md border border-white/60 shadow-lg rounded-2xl p-2 sm:p-2.5 flex flex-col gap-1.5">
+                    <div class="flex flex-row items-center gap-1.5 sm:gap-2 w-full">
+                        <label for="nis-input" class="sr-only">Masukkan NIS</label>
+                        <input 
+                            type="text" 
+                            id="nis-input" 
+                            inputmode="numeric"
+                            maxlength="4"
+                            placeholder="4 digit NIS..." 
+                            oninput="handleNisAutoLookup(this)"
+                            required
+                            class="flex-1 min-w-0 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-white/75 border border-white/80 rounded-xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all"
+                        >
+                        <button 
+                            type="submit" 
+                            id="submit-btn"
+                            class="shrink-0 py-1.5 sm:py-2 px-3 sm:px-4 bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            Masuk
+                        </button>
+                    </div>
+                    <!-- Area tampilan otomatis Nama dan Kelas -->
+                    <div id="student-info" class="hidden bg-white/80 border border-teal-500/40 rounded-xl px-2.5 py-1.5 text-left shadow-sm">
+                        <p class="text-[11px] sm:text-xs text-gray-800 font-bold truncate">Nama: <span id="student-name" class="text-teal-700"></span></p>
+                        <p class="text-[11px] sm:text-xs text-gray-800 font-bold truncate">Kelas: <span id="student-class" class="text-blue-700"></span></p>
+                    </div>
+                    <!-- Area pesan notifikasi status -->
+                    <p id="nis-feedback" class="hidden text-[11px] sm:text-xs font-semibold text-center rounded-lg py-1 px-2"></p>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pesan fallback tersembunyi jika terjadi gangguan jaringan saat memuat gambar -->
+        <div id="fallback-message" class="hidden text-center p-8 border border-gray-200 rounded-xl bg-gray-50 max-w-md">
+            <p class="text-gray-700 font-medium mb-2">Gambar poster tidak dapat dimuat.</p>
+            <p class="text-gray-500 text-sm mb-4">Pastikan koneksi internet Anda stabil atau periksa kembali tautan gambar.</p>
+            <button 
+                onclick="location.reload()" 
+                class="px-4 py-2 bg-gray-900 text-white text-sm rounded-lg hover:bg-gray-800 transition-colors cursor-pointer"
+            >
+                Muat Ulang Halaman
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Kontainer Pembelajaran Studi Kasus 1 (Tersembunyi sebelum siswa klik Masuk) -->
+    <section id="study-case-view" class="hidden w-full max-w-3xl mx-auto py-4 sm:py-8 px-2 sm:px-4">
+        <div class="bg-white border border-gray-200 rounded-3xl shadow-xl overflow-hidden">
+            <!-- Header Identitas Siswa & Judul Modul -->
+            <div class="bg-gradient-to-r from-blue-600 via-teal-500 to-emerald-500 p-5 sm:p-7 text-white">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold tracking-wide uppercase">
+                        Pembelajaran Studi Kasus 1
+                    </span>
+                    <button 
+                        onclick="kembaliKeBeranda()" 
+                        class="text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+                    >
+                        Keluar
+                    </button>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-extrabold leading-snug mb-3">
+                    Menghitung Konsumsi Daya Listrik di Rumah dan Biayanya
+                </h2>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm bg-black/15 rounded-2xl px-4 py-2.5">
+                    <span><strong>NIS:</strong> <span id="active-student-nis">-</span></span>
+                    <span>•</span>
+                    <span><strong>Nama:</strong> <span id="active-student-name">-</span></span>
+                    <span>•</span>
+                    <span><strong>Kelas:</strong> <span id="active-student-class">-</span></span>
+                </div>
+            </div>
+
+            <!-- Bar Progres Soal -->
+            <div class="bg-gray-50 px-5 sm:px-7 py-3 border-b border-gray-200 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <span id="case-progress-label" class="text-xs sm:text-sm font-bold text-gray-700">Kasus 1 dari 5</span>
+                    <span id="case-difficulty-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                        Tingkat: Dasar
+                    </span>
+                </div>
+                <div class="w-28 sm:w-44 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="case-progress-bar" class="h-full bg-gradient-to-r from-blue-600 to-teal-500 transition-all duration-300" style="width: 20%;"></div>
+                </div>
+            </div>
+
+            <!-- Isi Stimulus & Pertanyaan Studi Kasus -->
+            <div class="p-5 sm:p-7 space-y-5">
+                <!-- Kotak Stimulus Kasus -->
+                <div class="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-4 sm:p-5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                        <h3 id="case-title" class="text-sm sm:text-base font-extrabold text-blue-900 uppercase tracking-wide">
+                            Stimulus Kasus
+                        </h3>
+                    </div>
+                    <p id="case-stimulus" class="text-sm sm:text-base text-gray-700 leading-relaxed"></p>
+                </div>
+
+                <!-- Kotak Pertanyaan -->
+                <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5">
+                    <h4 class="text-xs sm:text-sm font-extrabold text-gray-500 uppercase tracking-wider mb-1.5">
+                        Pertanyaan
+                    </h4>
+                    <p id="case-question" class="text-sm sm:text-base font-bold text-gray-900 leading-relaxed"></p>
+                </div>
+
+                <!-- Kotak Pembahasan (Muncul setelah tombol Selanjutnya diklik) -->
+                <div id="case-explanation-box" class="hidden bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 sm:p-5 transition-all">
+                    <div class="flex items-center gap-2 mb-2.5">
+                        <span class="px-2.5 py-0.5 bg-emerald-600 text-white text-xs font-bold rounded-lg">
+                            Pembahasan & Langkah Penyelesaian
+                        </span>
+                    </div>
+                    <div id="case-explanation-content" class="text-sm sm:text-base text-gray-800 space-y-2 leading-relaxed"></div>
+                </div>
+
+                <!-- Kartu Selesai Seluruh Studi Kasus -->
+                <div id="case-completed-box" class="hidden bg-gradient-to-br from-teal-50 to-blue-50 border border-teal-200 rounded-2xl p-6 text-center space-y-3">
+                    <h3 class="text-lg sm:text-xl font-extrabold text-teal-900">
+                        Selamat! Studi Kasus 1 Telah Selesai
+                    </h3>
+                    <p class="text-sm text-gray-700 max-w-lg mx-auto">
+                        Anda telah mempelajari seluruh 5 tingkatan studi kasus perhitungan konsumsi daya listrik rumah tangga (Wh ke kWh) hingga simulasi biaya tagihan listrik bulanan.
+                    </p>
+                    <div class="pt-2 flex flex-wrap justify-center gap-3">
+                        <button 
+                            onclick="mulaiUlangStudiKasus()" 
+                            class="px-5 py-2.5 bg-white border border-teal-300 text-teal-700 font-bold text-sm rounded-xl hover:bg-teal-50 transition-colors cursor-pointer"
+                        >
+                            Ulangi Studi Kasus 1
+                        </button>
+                        <button 
+                            onclick="mulaiStudiKasus2()" 
+                            class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold text-sm rounded-xl shadow hover:shadow-md transition-all cursor-pointer active:scale-95"
+                        >
+                            Selesai & Lanjut ke Studi Kasus 2 →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tombol Navigasi Bawah -->
+                <div id="case-nav-footer" class="pt-2 flex items-center justify-between gap-3 border-t border-gray-100">
+                    <button 
+                        id="prev-case-btn"
+                        onclick="sebelumnyaStudiKasus()" 
+                        class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        ← Sebelumnya
+                    </button>
+                    <button 
+                        id="next-case-btn"
+                        onclick="selanjutnyaStudiKasus()" 
+                        class="px-5 sm:px-6 py-2.5 bg-gradient-to-r from-blue-600 to-teal-500 hover:from-blue-700 hover:to-teal-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
+                    >
+                        Selanjutnya →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Kontainer Evaluasi Studi Kasus 2 (Pilihan Ganda Berbasis Poin Pembahasan + KKTP) -->
+    <section id="study-case-2-view" class="hidden w-full max-w-3xl mx-auto py-4 sm:py-8 px-2 sm:px-4">
+        <div class="bg-white border border-gray-200 rounded-3xl shadow-xl overflow-hidden">
+            <!-- Header Studi Kasus 2 -->
+            <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-teal-500 p-5 sm:p-7 text-white">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-bold tracking-wide uppercase">
+                        Studi Kasus 2 • Evaluasi Mandiri
+                    </span>
+                    <button 
+                        onclick="kembaliKeBeranda()" 
+                        class="text-xs font-semibold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
+                    >
+                        Keluar
+                    </button>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-extrabold leading-snug mb-3">
+                    Latihan Terstruktur: Analisis Konsumsi Daya & Biaya Listrik
+                </h2>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm bg-black/15 rounded-2xl px-4 py-2.5">
+                    <span><strong>NIS:</strong> <span id="sc2-student-nis">-</span></span>
+                    <span>•</span>
+                    <span><strong>Nama:</strong> <span id="sc2-student-name">-</span></span>
+                    <span>•</span>
+                    <span><strong>Kelas:</strong> <span id="sc2-student-class">-</span></span>
+                </div>
+            </div>
+
+            <!-- Bar Progres Studi Kasus 2 -->
+            <div id="sc2-progress-header" class="bg-gray-50 px-5 sm:px-7 py-3 border-b border-gray-200 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <span id="sc2-progress-label" class="text-xs sm:text-sm font-bold text-gray-700">Kasus 1 dari 5</span>
+                    <span id="sc2-difficulty-badge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                        Tingkat: Dasar
+                    </span>
+                </div>
+                <div class="w-28 sm:w-44 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="sc2-progress-bar" class="h-full bg-gradient-to-r from-indigo-600 to-teal-500 transition-all duration-300" style="width: 20%;"></div>
+                </div>
+            </div>
+
+            <!-- Area Soal Studi Kasus 2 -->
+            <div id="sc2-quiz-body" class="p-5 sm:p-7 space-y-5">
+                <!-- Stimulus Kasus dengan Angka Baru -->
+                <div class="bg-indigo-50/70 border border-indigo-200/80 rounded-2xl p-4 sm:p-5">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                        <h3 id="sc2-case-title" class="text-sm sm:text-base font-extrabold text-indigo-950 uppercase tracking-wide">
+                            Stimulus Kasus
+                        </h3>
+                    </div>
+                    <p id="sc2-case-stimulus" class="text-sm sm:text-base text-gray-700 leading-relaxed"></p>
+                </div>
+
+                <!-- Daftar Pertanyaan Pilihan Ganda dari Setiap Poin Pembahasan -->
+                <div id="sc2-subquestions-container" class="space-y-4"></div>
+
+                <!-- Peringatan jika belum semua poin dijawab -->
+                <p id="sc2-warning-msg" class="hidden text-xs sm:text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 text-center">
+                    Silakan pilih jawaban untuk semua poin pertanyaan pada kasus ini terlebih dahulu.
+                </p>
+
+                <!-- Tombol Navigasi Studi Kasus 2 -->
+                <div class="pt-2 flex items-center justify-between gap-3 border-t border-gray-100">
+                    <button 
+                        id="sc2-prev-btn"
+                        onclick="sebelumnyaStudiKasus2()" 
+                        class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs sm:text-sm rounded-xl transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                        ← Sebelumnya
+                    </button>
+                    <button 
+                        id="sc2-next-btn"
+                        onclick="selanjutnyaStudiKasus2()" 
+                        class="px-5 sm:px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-teal-500 hover:from-indigo-700 hover:to-teal-600 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
+                    >
+                        Kasus Berikutnya →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Area Hasil Pekerjaan & Deskripsi KKTP (Muncul setelah klik Selesai di Kasus 5) -->
+            <div id="sc2-result-body" class="hidden p-5 sm:p-8 space-y-6">
+                <div class="text-center space-y-2">
+                    <span class="inline-block px-3.5 py-1 bg-teal-100 text-teal-800 text-xs font-extrabold rounded-full uppercase tracking-wider">
+                        Laporan Hasil Pekerjaan & Capaian KKTP
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-extrabold text-gray-900">
+                        Evaluasi Studi Kasus 2 Selesai
+                    </h3>
+                    <p class="text-xs sm:text-sm text-gray-600">
+                        Berikut adalah rekapitulasi ketuntasan belajar berdasarkan Kriteria Ketercapaian Tujuan Pembelajaran (KKTP).
+                    </p>
+                </div>
+
+                <!-- Kartu Skor Utama -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                    <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 text-center">
+                        <p class="text-xs font-bold text-gray-500 uppercase">Jawaban Benar</p>
+                        <p id="sc2-score-correct" class="text-2xl sm:text-3xl font-extrabold text-gray-900 mt-1">0 / 0</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-50 to-teal-50 border border-teal-200 rounded-2xl p-4 text-center">
+                        <p class="text-xs font-bold text-teal-700 uppercase">Nilai Akhir</p>
+                        <p id="sc2-score-value" class="text-2xl sm:text-3xl font-extrabold text-teal-700 mt-1">0</p>
+                    </div>
+                    <div id="sc2-kktp-status-card" class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
+                        <p class="text-xs font-bold text-emerald-700 uppercase">Predikat KKTP</p>
+                        <p id="sc2-kktp-predicate" class="text-base sm:text-lg font-extrabold text-emerald-800 mt-1.5">-</p>
+                    </div>
+                </div>
+
+                <!-- Deskripsi Capaian KKTP -->
+                <div id="sc2-kktp-description-box" class="rounded-2xl p-5 border space-y-2">
+                    <h4 class="text-sm sm:text-base font-extrabold flex items-center gap-2">
+                        <span>Deskripsi Capaian KKTP (Kriteria Ketercapaian Tujuan Pembelajaran)</span>
+                    </h4>
+                    <p id="sc2-kktp-description" class="text-sm sm:text-base leading-relaxed"></p>
+                    <p id="sc2-kktp-followup" class="text-xs sm:text-sm font-semibold pt-1"></p>
+                </div>
+
+                <!-- Status Pengiriman Otomatis ke Spreadsheet -->
+                <p id="sc2-sync-status" class="text-xs sm:text-sm font-semibold text-center rounded-xl py-2 px-3 bg-blue-50 text-blue-700 border border-blue-200">
+                    Menyimpan hasil & predikat ke Spreadsheet...
+                </p>
+
+                <!-- Tombol Aksi Akhir -->
+                <div class="pt-3 flex flex-wrap justify-center gap-3 border-t border-gray-100">
+                    <button 
+                        onclick="mulaiStudiKasus2()" 
+                        class="px-5 py-2.5 bg-white border border-indigo-300 text-indigo-700 font-bold text-sm rounded-xl hover:bg-indigo-50 transition-colors cursor-pointer"
+                    >
+                        Kerjakan Ulang Studi Kasus 2 (Acak Ulang)
+                    </button>
+                    <button 
+                        onclick="kembaliKeBeranda()" 
+                        class="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-teal-500 text-white font-bold text-sm rounded-xl shadow hover:shadow-md transition-all cursor-pointer"
+                    >
+                        Selesai & Kembali ke Beranda
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        /**
+         * Menangani kegagalan pemuatan gambar dengan menyembunyikan elemen img
+         * dan menampilkan pesan informasi yang ramah pengguna.
+         */
+        function handleImageError(imgElement) {
+            try {
+                imgElement.style.display = 'none';
+                const overlayText = document.getElementById('poster-overlay-text');
+                if (overlayText) {
+                    overlayText.style.display = 'none';
+                }
+                const fallback = document.getElementById('fallback-message');
+                if (fallback) {
+                    fallback.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Terjadi kesalahan saat menangani error gambar:', error);
+            }
+        }
+
+        /**
+         * URL Web App Google Apps Script hasil Deploy (ganti dengan URL Web App Anda)
+         */
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxhnksdgzm2BZ2lV8-XieRNl-tuZlvPAnFYtKAGKqZ3ksZbTyRIkzCRDQtYLtcfrCtv/exec';
+        let lastCheckedNis = '';
+        let verifiedStudent = null;
+
+        /**
+         * Data 5 Soal & Pembahasan Studi Kasus 1 sesuai dokumen terlampir
+         */
+        const studiKasus1Data = [
+            {
+                nomor: 1,
+                tingkat: 'Mudah',
+                badgeClass: 'bg-emerald-100 text-emerald-700',
+                judul: 'Kasus 1 (Mudah)',
+                stimulus: 'Sebuah rumah memiliki 3 buah lampu 20 W yang menyala 5 jam per hari dan 1 buah kipas angin 60 W yang menyala 8 jam per hari. Tarif listrik yang berlaku adalah Rp1.500/kWh.',
+                pertanyaan: 'Hitunglah: a. Energi listrik per hari | b. Biaya listrik selama 30 hari',
+                pembahasan: `
+                    <p><strong>a. Energi per hari:</strong><br>
+                    • Lampu: 3 × 20 W × 5 jam ÷ 1.000 = <strong>0,3 kWh</strong><br>
+                    • Kipas angin: 1 × 60 W × 8 jam ÷ 1.000 = <strong>0,48 kWh</strong><br>
+                    • Total = 0,3 + 0,48 = <strong>0,78 kWh/hari</strong></p>
+                    <p><strong>b. Biaya listrik selama 30 hari:</strong><br>
+                    • Energi per bulan = 0,78 × 30 = <strong>23,4 kWh</strong><br>
+                    • Biaya = 23,4 × Rp1.500 = <strong>Rp35.100,00</strong></p>
+                `
+            },
+            {
+                nomor: 2,
+                tingkat: 'Mudah',
+                badgeClass: 'bg-emerald-100 text-emerald-700',
+                judul: 'Kasus 2 (Mudah)',
+                stimulus: 'Bu Dewi menggunakan rice cooker 300 W selama 2 jam per hari dan setrika 400 W selama 1 jam per hari. Tarif listrik sebesar Rp1.400/kWh.',
+                pertanyaan: 'Berapa biaya listrik yang dikeluarkan Bu Dewi selama 1 bulan (30 hari) jika tarif Rp1.400/kWh?',
+                pembahasan: `
+                    <p><strong>1. Energi listrik per hari:</strong><br>
+                    • Rice cooker: 300 × 2 ÷ 1.000 = <strong>0,6 kWh/hari</strong><br>
+                    • Setrika: 400 × 1 ÷ 1.000 = <strong>0,4 kWh/hari</strong><br>
+                    • Total per hari = 0,6 + 0,4 = <strong>1,0 kWh</strong></p>
+                    <p><strong>2. Energi & biaya per bulan (30 hari):</strong><br>
+                    • Total per bulan = 1,0 × 30 = <strong>30 kWh</strong><br>
+                    • Biaya = 30 × Rp1.400 = <strong>Rp42.000,00</strong></p>
+                `
+            },
+            {
+                nomor: 3,
+                tingkat: 'Sedang',
+                badgeClass: 'bg-blue-100 text-blue-700',
+                judul: 'Kasus 3 (Sedang)',
+                stimulus: `Sebuah rumah tangga menggunakan peralatan berikut (Tarif listrik Rp1.500/kWh):
+                    <div class="overflow-x-auto mt-2.5">
+                        <table class="w-full text-xs sm:text-sm border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
+                            <thead class="bg-blue-100/80 text-blue-950 font-bold">
+                                <tr>
+                                    <th class="border border-blue-200 px-3 py-1.5 text-left">Peralatan</th>
+                                    <th class="border border-blue-200 px-3 py-1.5 text-center">Jumlah</th>
+                                    <th class="border border-blue-200 px-3 py-1.5 text-center">Daya</th>
+                                    <th class="border border-blue-200 px-3 py-1.5 text-center">Pemakaian/hari</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-800">
+                                <tr><td class="border border-blue-200 px-3 py-1.5">Lampu</td><td class="border border-blue-200 px-3 py-1.5 text-center">6</td><td class="border border-blue-200 px-3 py-1.5 text-center">15 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">8 jam</td></tr>
+                                <tr><td class="border border-blue-200 px-3 py-1.5">Kulkas</td><td class="border border-blue-200 px-3 py-1.5 text-center">1</td><td class="border border-blue-200 px-3 py-1.5 text-center">100 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">24 jam</td></tr>
+                                <tr><td class="border border-blue-200 px-3 py-1.5">Mesin cuci</td><td class="border border-blue-200 px-3 py-1.5 text-center">1</td><td class="border border-blue-200 px-3 py-1.5 text-center">300 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">2 jam</td></tr>
+                                <tr><td class="border border-blue-200 px-3 py-1.5">AC</td><td class="border border-blue-200 px-3 py-1.5 text-center">1</td><td class="border border-blue-200 px-3 py-1.5 text-center">750 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">5 jam</td></tr>
+                            </tbody>
+                        </table>
+                    </div>`,
+                pertanyaan: 'Jika tarif listrik Rp1.500/kWh, hitunglah: a. Energi listrik per hari | b. Biaya listrik per bulan (30 hari)',
+                pembahasan: `
+                    <p><strong>a. Energi per hari:</strong><br>
+                    • Lampu: 6 × 15 × 8 ÷ 1.000 = <strong>0,72 kWh</strong><br>
+                    • Kulkas: 1 × 100 × 24 ÷ 1.000 = <strong>2,4 kWh</strong><br>
+                    • Mesin cuci: 1 × 300 × 2 ÷ 1.000 = <strong>0,6 kWh</strong><br>
+                    • AC: 1 × 750 × 5 ÷ 1.000 = <strong>3,75 kWh</strong><br>
+                    • Total = 0,72 + 2,4 + 0,6 + 3,75 = <strong>7,47 kWh/hari</strong></p>
+                    <p><strong>b. Biaya listrik per bulan (30 hari):</strong><br>
+                    • Energi per bulan = 7,47 × 30 = <strong>224,1 kWh</strong><br>
+                    • Biaya = 224,1 × Rp1.500 = <strong>Rp336.150,00</strong></p>
+                `
+            },
+            {
+                nomor: 4,
+                tingkat: 'Sedang',
+                badgeClass: 'bg-blue-100 text-blue-700',
+                judul: 'Kasus 4 (Sedang)',
+                stimulus: 'Pak Rudi ingin menghemat listrik. Ia mengganti 5 lampu 40 W (menyala 10 jam/hari) dengan lampu LED 8 W (menyala 10 jam/hari). Tarif listrik sebesar Rp1.500/kWh.',
+                pertanyaan: 'Berapa penghematan biaya listrik per bulan (30 hari) yang diperoleh Pak Rudi?',
+                pembahasan: `
+                    <p><strong>1. Sebelum diganti (lampu 40 W):</strong><br>
+                    • Energi = 5 × 40 × 10 ÷ 1.000 = 2 kWh/hari<br>
+                    • Per bulan = 2 × 30 = 60 kWh<br>
+                    • Biaya = 60 × Rp1.500 = <strong>Rp90.000</strong></p>
+                    <p><strong>2. Setelah diganti (lampu LED 8 W):</strong><br>
+                    • Energi = 5 × 8 × 10 ÷ 1.000 = 0,4 kWh/hari<br>
+                    • Per bulan = 0,4 × 30 = 12 kWh<br>
+                    • Biaya = 12 × Rp1.500 = <strong>Rp18.000</strong></p>
+                    <p><strong>3. Besar Penghematan:</strong><br>
+                    • Penghematan = Rp90.000 − Rp18.000 = <strong>Rp72.000,00 per bulan</strong></p>
+                `
+            },
+            {
+                nomor: 5,
+                tingkat: 'Sulit',
+                badgeClass: 'bg-rose-100 text-rose-700',
+                judul: 'Kasus 5 (Sulit)',
+                stimulus: `Sebuah rumah memiliki data pemakaian listrik sebagai berikut (Tarif listrik Rp1.500/kWh):
+                    <div class="overflow-x-auto mt-2.5">
+                        <table class="w-full text-xs sm:text-sm border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
+                            <thead class="bg-blue-100/80 text-blue-950 font-bold">
+                                <tr>
+                                    <th class="border border-blue-200 px-3 py-1.5 text-left">Peralatan</th>
+                                    <th class="border border-blue-200 px-3 py-1.5 text-center">Jumlah</th>
+                                    <th class="border border-blue-200 px-3 py-1.5 text-center">Daya</th>
+                                    <th class="border border-blue-200 px-3 py-1.5 text-center">Pemakaian/hari</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-800">
+                                <tr><td class="border border-blue-200 px-3 py-1.5">Lampu</td><td class="border border-blue-200 px-3 py-1.5 text-center">8</td><td class="border border-blue-200 px-3 py-1.5 text-center">20 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">6 jam</td></tr>
+                                <tr><td class="border border-blue-200 px-3 py-1.5">TV</td><td class="border border-blue-200 px-3 py-1.5 text-center">2</td><td class="border border-blue-200 px-3 py-1.5 text-center">80 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">5 jam</td></tr>
+                                <tr><td class="border border-blue-200 px-3 py-1.5">Kulkas</td><td class="border border-blue-200 px-3 py-1.5 text-center">1</td><td class="border border-blue-200 px-3 py-1.5 text-center">120 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">24 jam</td></tr>
+                                <tr><td class="border border-blue-200 px-3 py-1.5">Setrika</td><td class="border border-blue-200 px-3 py-1.5 text-center">1</td><td class="border border-blue-200 px-3 py-1.5 text-center">300 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">1 jam</td></tr>
+                                <tr><td class="border border-blue-200 px-3 py-1.5">Pompa air</td><td class="border border-blue-200 px-3 py-1.5 text-center">1</td><td class="border border-blue-200 px-3 py-1.5 text-center">250 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">2 jam</td></tr>
+                                <tr><td class="border border-blue-200 px-3 py-1.5">AC</td><td class="border border-blue-200 px-3 py-1.5 text-center">1</td><td class="border border-blue-200 px-3 py-1.5 text-center">800 W</td><td class="border border-blue-200 px-3 py-1.5 text-center">8 jam</td></tr>
+                            </tbody>
+                        </table>
+                    </div>`,
+                pertanyaan: 'Hitunglah: a. Total energi per hari | b. Total energi per bulan (30 hari) | c. Biaya listrik per bulan | d. Jika Pak Andi ingin menghemat 20% dari biaya listrik, berapa biaya listrik yang harus dicapai?',
+                pembahasan: `
+                    <p><strong>a. Energi per hari:</strong><br>
+                    • Lampu: 8 × 20 × 6 ÷ 1.000 = 0,96 kWh<br>
+                    • TV: 2 × 80 × 5 ÷ 1.000 = 0,8 kWh<br>
+                    • Kulkas: 1 × 120 × 24 ÷ 1.000 = 2,88 kWh<br>
+                    • Setrika: 1 × 300 × 1 ÷ 1.000 = 0,3 kWh<br>
+                    • Pompa air: 1 × 250 × 2 ÷ 1.000 = 0,5 kWh<br>
+                    • AC: 1 × 800 × 8 ÷ 1.000 = 6,4 kWh<br>
+                    • Total = <strong>11,84 kWh/hari</strong></p>
+                    <p><strong>b. Energi per bulan (30 hari):</strong><br>
+                    • 11,84 × 30 = <strong>355,2 kWh</strong></p>
+                    <p><strong>c. Biaya listrik per bulan:</strong><br>
+                    • 355,2 × Rp1.500 = <strong>Rp532.800,00</strong></p>
+                    <p><strong>d. Target biaya setelah penghematan 20%:</strong><br>
+                    • Biaya setelah hemat = 80% × Rp532.800 = <strong>Rp426.240,00</strong><br>
+                    • Artinya Pak Andi harus menghemat <strong>Rp106.560,00</strong> per bulan.</p>
+                `
+            }
+        ];
+
+        let currentCaseIndex = 0;
+        let isExplanationShown = false;
+
+        /**
+         * Otomatis mencari data Nama dan Kelas begitu 4 digit angka NIS diketik
+         */
+        function handleNisAutoLookup(inputElement) {
+            // Hanya izinkan karakter angka (maksimal 4 digit)
+            const cleanedValue = inputElement.value.replace(/\D/g, '').slice(0, 4);
+            inputElement.value = cleanedValue;
+
+            const studentInfo = document.getElementById('student-info');
+            const feedback = document.getElementById('nis-feedback');
+
+            if (cleanedValue.length < 4) {
+                lastCheckedNis = '';
+                verifiedStudent = null;
+                studentInfo.classList.add('hidden');
+                feedback.classList.add('hidden');
+                return;
+            }
+
+            if (cleanedValue.length === 4 && cleanedValue !== lastCheckedNis) {
+                lastCheckedNis = cleanedValue;
+                fetchStudentByNis(cleanedValue);
+            }
+        }
+
+        /**
+         * Mengambil data Nama dan Kelas berdasarkan NIS dari Google Spreadsheet (sheet 'ds')
+         */
+        async function fetchStudentByNis(nisValue) {
+            const submitBtn = document.getElementById('submit-btn');
+            const feedback = document.getElementById('nis-feedback');
+            const studentInfo = document.getElementById('student-info');
+            const studentNameEl = document.getElementById('student-name');
+            const studentClassEl = document.getElementById('student-class');
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Cek...';
+                verifiedStudent = null;
+                studentInfo.classList.add('hidden');
+                feedback.textContent = 'Mencari data siswa...';
+                feedback.className = 'block text-[11px] sm:text-xs font-semibold text-center rounded-lg py-1 px-2 bg-blue-500/20 text-blue-800 border border-blue-500/30';
+
+                const requestUrl = `${GAS_WEB_APP_URL}?nis=${encodeURIComponent(nisValue)}`;
+                const response = await fetch(requestUrl);
+                const result = await response.json();
+
+                if (result.status === 'success' && result.found) {
+                    const nama = result.nama || (result.data && (result.data.Nama || result.data.NAMA || result.data.nama)) || '-';
+                    const kelas = result.kelas || (result.data && (result.data.Kelas || result.data.KELAS || result.data.kelas)) || '-';
+
+                    verifiedStudent = { nis: nisValue, nama: nama, kelas: kelas };
+                    studentNameEl.textContent = nama;
+                    studentClassEl.textContent = kelas;
+                    studentInfo.classList.remove('hidden');
+                    feedback.classList.add('hidden');
+                } else {
+                    verifiedStudent = null;
+                    studentInfo.classList.add('hidden');
+                    feedback.textContent = result.message || `NIS ${nisValue} tidak ditemukan.`;
+                    feedback.className = 'block text-[11px] sm:text-xs font-semibold text-center rounded-lg py-1 px-2 bg-rose-500/20 text-rose-800 border border-rose-500/30';
+                }
+            } catch (error) {
+                console.error('Terjadi kesalahan saat memproses NIS:', error);
+                verifiedStudent = null;
+                studentInfo.classList.add('hidden');
+                feedback.textContent = 'Gagal terhubung ke server Spreadsheet.';
+                feedback.className = 'block text-[11px] sm:text-xs font-semibold text-center rounded-lg py-1 px-2 bg-rose-500/20 text-rose-800 border border-rose-500/30';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Masuk';
+            }
+        }
+
+        /**
+         * Menangani pengiriman formulir NIS saat tombol Masuk ditekan
+         */
+        async function handleNisSubmit(event) {
+            event.preventDefault();
+            const nisInput = document.getElementById('nis-input');
+            const feedback = document.getElementById('nis-feedback');
+            const nisValue = nisInput.value.trim();
+
+            if (nisValue.length !== 4) {
+                feedback.textContent = 'Masukkan tepat 4 digit angka NIS.';
+                feedback.className = 'block text-[11px] sm:text-xs font-semibold text-center rounded-lg py-1 px-2 bg-amber-500/20 text-amber-800 border border-amber-500/30';
+                return;
+            }
+
+            if (!verifiedStudent || verifiedStudent.nis !== nisValue) {
+                await fetchStudentByNis(nisValue);
+            }
+
+            if (verifiedStudent && verifiedStudent.nis === nisValue) {
+                bukaPembelajaranStudiKasus();
+            }
+        }
+
+        /**
+         * Membuka halaman Pembelajaran Studi Kasus 1 setelah NIS terverifikasi
+         */
+        function bukaPembelajaranStudiKasus() {
+            document.getElementById('active-student-nis').textContent = verifiedStudent.nis;
+            document.getElementById('active-student-name').textContent = verifiedStudent.nama;
+            document.getElementById('active-student-class').textContent = verifiedStudent.kelas;
+
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('study-case-view').classList.remove('hidden');
+
+            currentCaseIndex = 0;
+            isExplanationShown = false;
+            renderStudiKasus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Menampilkan soal & pembahasan aktif sesuai indeks studi kasus
+         */
+        function renderStudiKasus() {
+            const item = studiKasus1Data[currentCaseIndex];
+            const total = studiKasus1Data.length;
+
+            document.getElementById('case-progress-label').textContent = `Kasus ${item.nomor} dari ${total}`;
+            document.getElementById('case-progress-bar').style.width = `${((currentCaseIndex + 1) / total) * 100}%`;
+
+            const badge = document.getElementById('case-difficulty-badge');
+            badge.textContent = `Tingkat: ${item.tingkat}`;
+            badge.className = `text-[11px] font-bold px-2.5 py-0.5 rounded-full ${item.badgeClass}`;
+
+            document.getElementById('case-title').textContent = item.judul;
+            document.getElementById('case-stimulus').innerHTML = item.stimulus;
+            document.getElementById('case-question').textContent = item.pertanyaan;
+            document.getElementById('case-explanation-content').innerHTML = item.pembahasan;
+
+            const explanationBox = document.getElementById('case-explanation-box');
+            const completedBox = document.getElementById('case-completed-box');
+            const navFooter = document.getElementById('case-nav-footer');
+            const prevBtn = document.getElementById('prev-case-btn');
+            const nextBtn = document.getElementById('next-case-btn');
+
+            prevBtn.disabled = currentCaseIndex === 0 && !isExplanationShown;
+
+            if (isExplanationShown) {
+                explanationBox.classList.remove('hidden');
+                if (currentCaseIndex < total - 1) {
+                    completedBox.classList.add('hidden');
+                    navFooter.classList.remove('hidden');
+                    nextBtn.textContent = `Lanjut ke Kasus ${item.nomor + 1} →`;
+                } else {
+                    completedBox.classList.remove('hidden');
+                    navFooter.classList.add('hidden');
+                }
+            } else {
+                explanationBox.classList.add('hidden');
+                completedBox.classList.add('hidden');
+                navFooter.classList.remove('hidden');
+                nextBtn.textContent = 'Selanjutnya →';
+            }
+        }
+
+        /**
+         * Tombol Selanjutnya: tahap 1 membuka pembahasan, tahap 2 lanjut ke soal berikutnya
+         */
+        function selanjutnyaStudiKasus() {
+            if (!isExplanationShown) {
+                isExplanationShown = true;
+                renderStudiKasus();
+                document.getElementById('case-explanation-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else if (currentCaseIndex < studiKasus1Data.length - 1) {
+                currentCaseIndex++;
+                isExplanationShown = false;
+                renderStudiKasus();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        /**
+         * Tombol Sebelumnya untuk meninjau soal sebelumnya
+         */
+        function sebelumnyaStudiKasus() {
+            if (isExplanationShown) {
+                isExplanationShown = false;
+                renderStudiKasus();
+            } else if (currentCaseIndex > 0) {
+                currentCaseIndex--;
+                isExplanationShown = true;
+                renderStudiKasus();
+            }
+        }
+
+        /**
+         * Mengulang pembelajaran studi kasus dari soal pertama
+         */
+        function mulaiUlangStudiKasus() {
+            currentCaseIndex = 0;
+            isExplanationShown = false;
+            renderStudiKasus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Kembali ke tampilan poster awal untuk ganti NIS
+         */
+        function kembaliKeBeranda() {
+            document.getElementById('study-case-view').classList.add('hidden');
+            document.getElementById('study-case-2-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+        }
+
+        /**
+         * Data Studi Kasus 2 sesuai dokumen terlampir:
+         * Setiap poin pembahasan dijadikan soal pilihan ganda dengan 4 opsi teracak.
+         */
+        const studiKasus2Template = [
+            {
+                nomor: 1,
+                tingkat: 'Tingkat Dasar',
+                badgeClass: 'bg-emerald-100 text-emerald-700',
+                judul: 'Kasus 1 (Tingkat Dasar)',
+                stimulus: 'Sebuah rumah memiliki 4 buah lampu 25 W yang menyala 6 jam per hari dan 1 buah TV 120 W yang menyala 4 jam per hari. Tarif listrik yang berlaku sebesar Rp1.500/kWh.',
+                poinSoal: [
+                    {
+                        pertanyaan: '1. Berapakah energi listrik harian yang dikonsumsi oleh 4 buah lampu tersebut?',
+                        jawabanBenar: '0,6 kWh',
+                        pengecoh: ['0,48 kWh', '1,08 kWh', '0,24 kWh']
+                    },
+                    {
+                        pertanyaan: '2. Berapakah total energi listrik harian seluruh peralatan (Lampu + TV)?',
+                        jawabanBenar: '1,08 kWh/hari',
+                        pengecoh: ['0,96 kWh/hari', '1,20 kWh/hari', '1,48 kWh/hari']
+                    },
+                    {
+                        pertanyaan: '3. Berapakah total energi listrik dan biaya listrik selama 30 hari?',
+                        jawabanBenar: '32,4 kWh | Rp48.600,00',
+                        pengecoh: [
+                            '36,0 kWh | Rp54.000,00',
+                            '28,8 kWh | Rp43.200,00',
+                            '30,4 kWh | Rp45.600,00'
+                        ]
+                    }
+                ]
+            },
+            {
+                nomor: 2,
+                tingkat: 'Tingkat Dasar',
+                badgeClass: 'bg-emerald-100 text-emerald-700',
+                judul: 'Kasus 2 (Tingkat Dasar)',
+                stimulus: 'Bu Ani menggunakan setrika 350 W selama 2 jam setiap hari dan rice cooker 300 W selama 3 jam setiap hari. Tarif listrik sebesar Rp1.400/kWh.',
+                poinSoal: [
+                    {
+                        pertanyaan: '1. Berapakah energi listrik harian masing-masing alat (Setrika dan Rice Cooker)?',
+                        jawabanBenar: 'Setrika 0,7 kWh & Rice cooker 0,9 kWh',
+                        pengecoh: [
+                            'Setrika 0,9 kWh & Rice cooker 0,7 kWh',
+                            'Setrika 0,35 kWh & Rice cooker 0,6 kWh',
+                            'Setrika 1,4 kWh & Rice cooker 0,9 kWh'
+                        ]
+                    },
+                    {
+                        pertanyaan: '2. Berapakah total energi listrik yang digunakan Bu Ani dalam 1 bulan (30 hari)?',
+                        jawabanBenar: '48 kWh',
+                        pengecoh: ['42 kWh', '54 kWh', '36 kWh']
+                    },
+                    {
+                        pertanyaan: '3. Berapakah biaya listrik yang dikeluarkan Bu Ani selama 1 bulan (30 hari)?',
+                        jawabanBenar: 'Rp67.200,00',
+                        pengecoh: ['Rp58.800,00', 'Rp72.000,00', 'Rp63.000,00']
+                    }
+                ]
+            },
+            {
+                nomor: 3,
+                tingkat: 'Tingkat Sedang',
+                badgeClass: 'bg-blue-100 text-blue-700',
+                judul: 'Kasus 3 (Tingkat Sedang)',
+                stimulus: `Sebuah rumah tangga menggunakan peralatan berikut (Tarif listrik Rp1.500/kWh):
+                    <div class="overflow-x-auto mt-2.5">
+                        <table class="w-full text-xs sm:text-sm border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
+                            <thead class="bg-indigo-100/80 text-indigo-950 font-bold">
+                                <tr>
+                                    <th class="border border-indigo-200 px-3 py-1.5 text-left">Peralatan</th>
+                                    <th class="border border-indigo-200 px-3 py-1.5 text-center">Jumlah</th>
+                                    <th class="border border-indigo-200 px-3 py-1.5 text-center">Daya</th>
+                                    <th class="border border-indigo-200 px-3 py-1.5 text-center">Pemakaian/hari</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-800">
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">Lampu</td><td class="border border-indigo-200 px-3 py-1.5 text-center">6</td><td class="border border-indigo-200 px-3 py-1.5 text-center">15 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">8 jam</td></tr>
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">Kulkas</td><td class="border border-indigo-200 px-3 py-1.5 text-center">1</td><td class="border border-indigo-200 px-3 py-1.5 text-center">100 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">24 jam</td></tr>
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">Mesin cuci</td><td class="border border-indigo-200 px-3 py-1.5 text-center">1</td><td class="border border-indigo-200 px-3 py-1.5 text-center">300 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">2 jam</td></tr>
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">AC</td><td class="border border-indigo-200 px-3 py-1.5 text-center">1</td><td class="border border-indigo-200 px-3 py-1.5 text-center">750 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">5 jam</td></tr>
+                            </tbody>
+                        </table>
+                    </div>`,
+                poinSoal: [
+                    {
+                        pertanyaan: '1. Berapakah energi listrik harian terbesar yang disumbangkan oleh AC (750 W, 5 jam/hari)?',
+                        jawabanBenar: '3,75 kWh',
+                        pengecoh: ['2,40 kWh', '3,50 kWh', '4,25 kWh']
+                    },
+                    {
+                        pertanyaan: '2. Berapakah total energi listrik per hari dari seluruh peralatan rumah tangga tersebut?',
+                        jawabanBenar: '7,47 kWh/hari',
+                        pengecoh: ['6,87 kWh/hari', '7,92 kWh/hari', '8,15 kWh/hari']
+                    },
+                    {
+                        pertanyaan: '3. Berapakah total energi bulanan (30 hari) dan biaya listrik yang harus dibayar?',
+                        jawabanBenar: '224,1 kWh | Rp336.150,00',
+                        pengecoh: [
+                            '206,1 kWh | Rp309.150,00',
+                            '237,6 kWh | Rp356.400,00',
+                            '214,5 kWh | Rp321.750,00'
+                        ]
+                    }
+                ]
+            },
+            {
+                nomor: 4,
+                tingkat: 'Tingkat Sedang',
+                badgeClass: 'bg-blue-100 text-blue-700',
+                judul: 'Kasus 4 (Tingkat Sedang)',
+                stimulus: 'Pak Rudi ingin menghemat listrik. Ia mengganti 5 lampu 40 W (menyala 10 jam/hari) dengan lampu LED 8 W (menyala 10 jam/hari). Tarif listrik sebesar Rp1.500/kWh.',
+                poinSoal: [
+                    {
+                        pertanyaan: '1. Berapakah biaya listrik bulanan (30 hari) sebelum lampu diganti (5 lampu 40 W)?',
+                        jawabanBenar: 'Rp90.000',
+                        pengecoh: ['Rp60.000', 'Rp75.000', 'Rp108.000']
+                    },
+                    {
+                        pertanyaan: '2. Berapakah biaya listrik bulanan (30 hari) setelah diganti lampu LED 8 W?',
+                        jawabanBenar: 'Rp18.000',
+                        pengecoh: ['Rp12.000', 'Rp24.000', 'Rp36.000']
+                    },
+                    {
+                        pertanyaan: '3. Berapakah penghematan biaya listrik per bulan (30 hari) yang berhasil diperoleh Pak Rudi?',
+                        jawabanBenar: 'Rp72.000,00 per bulan',
+                        pengecoh: [
+                            'Rp48.000,00 per bulan',
+                            'Rp60.000,00 per bulan',
+                            'Rp82.000,00 per bulan'
+                        ]
+                    }
+                ]
+            },
+            {
+                nomor: 5,
+                tingkat: 'Tingkat Sulit',
+                badgeClass: 'bg-rose-100 text-rose-700',
+                judul: 'Kasus 5 (Tingkat Sulit)',
+                stimulus: `Sebuah rumah memiliki data pemakaian listrik sebagai berikut (Tarif listrik Rp1.500/kWh):
+                    <div class="overflow-x-auto mt-2.5">
+                        <table class="w-full text-xs sm:text-sm border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
+                            <thead class="bg-indigo-100/80 text-indigo-950 font-bold">
+                                <tr>
+                                    <th class="border border-indigo-200 px-3 py-1.5 text-left">Peralatan</th>
+                                    <th class="border border-indigo-200 px-3 py-1.5 text-center">Jumlah</th>
+                                    <th class="border border-indigo-200 px-3 py-1.5 text-center">Daya</th>
+                                    <th class="border border-indigo-200 px-3 py-1.5 text-center">Pemakaian/hari</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-gray-800">
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">Lampu</td><td class="border border-indigo-200 px-3 py-1.5 text-center">8</td><td class="border border-indigo-200 px-3 py-1.5 text-center">20 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">6 jam</td></tr>
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">TV</td><td class="border border-indigo-200 px-3 py-1.5 text-center">2</td><td class="border border-indigo-200 px-3 py-1.5 text-center">80 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">5 jam</td></tr>
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">Kulkas</td><td class="border border-indigo-200 px-3 py-1.5 text-center">1</td><td class="border border-indigo-200 px-3 py-1.5 text-center">120 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">24 jam</td></tr>
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">Setrika</td><td class="border border-indigo-200 px-3 py-1.5 text-center">1</td><td class="border border-indigo-200 px-3 py-1.5 text-center">300 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">1 jam</td></tr>
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">Pompa air</td><td class="border border-indigo-200 px-3 py-1.5 text-center">1</td><td class="border border-indigo-200 px-3 py-1.5 text-center">250 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">2 jam</td></tr>
+                                <tr><td class="border border-indigo-200 px-3 py-1.5">AC</td><td class="border border-indigo-200 px-3 py-1.5 text-center">1</td><td class="border border-indigo-200 px-3 py-1.5 text-center">800 W</td><td class="border border-indigo-200 px-3 py-1.5 text-center">8 jam</td></tr>
+                            </tbody>
+                        </table>
+                    </div>`,
+                poinSoal: [
+                    {
+                        pertanyaan: '1. Berapakah total energi listrik per hari dari seluruh peralatan di rumah tersebut?',
+                        jawabanBenar: '11,84 kWh/hari',
+                        pengecoh: ['10,88 kWh/hari', '12,44 kWh/hari', '11,04 kWh/hari']
+                    },
+                    {
+                        pertanyaan: '2. Berapakah total energi per bulan (30 hari) dan biaya listrik per bulan?',
+                        jawabanBenar: '355,2 kWh | Rp532.800,00',
+                        pengecoh: [
+                            '326,4 kWh | Rp489.600,00',
+                            '373,2 kWh | Rp559.800,00',
+                            '342,0 kWh | Rp513.000,00'
+                        ]
+                    },
+                    {
+                        pertanyaan: '3. Jika Pak Andi ingin menghemat 20% dari biaya listrik, berapa biaya listrik yang harus dicapai?',
+                        jawabanBenar: 'Rp426.240,00 (hemat Rp106.560,00)',
+                        pengecoh: [
+                            'Rp452.880,00 (hemat Rp79.920,00)',
+                            'Rp399.600,00 (hemat Rp133.200,00)',
+                            'Rp415.200,00 (hemat Rp117.600,00)'
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        let sc2ActiveData = [];
+        let sc2CurrentIndex = 0;
+
+        /**
+         * Mengacak urutan elemen array menggunakan algoritma Fisher-Yates Shuffle
+         * dengan jaminan urutan hasil acakan berbeda dari urutan awal (derangement check)
+         */
+        function shuffleArray(array) {
+            const arr = [...array];
+            if (arr.length <= 1) return arr;
+
+            // Lakukan Fisher-Yates Shuffle
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+
+            // Pastikan urutan hasil tidak sama persis dengan urutan awal
+            const isIdentical = arr.every((val, idx) => val === array[idx]);
+            if (isIdentical) {
+                [arr[0], arr[1]] = [arr[1], arr[0]];
+            }
+
+            return arr;
+        }
+
+        /**
+         * Memulai Studi Kasus 2 dengan mengacak ulang seluruh opsi jawaban (A, B, C, D)
+         */
+        function mulaiStudiKasus2() {
+            if (verifiedStudent) {
+                document.getElementById('sc2-student-nis').textContent = verifiedStudent.nis;
+                document.getElementById('sc2-student-name').textContent = verifiedStudent.nama;
+                document.getElementById('sc2-student-class').textContent = verifiedStudent.kelas;
+            }
+
+            // Bangun salinan soal dengan 4 pilihan ganda yang selalu teracak
+            sc2ActiveData = studiKasus2Template.map(kasus => ({
+                ...kasus,
+                poinSoal: kasus.poinSoal.map(poin => {
+                    const semuaOpsi = [poin.jawabanBenar, ...poin.pengecoh];
+                    // Acak dua kali untuk meningkatkan entropi posisi kunci jawaban (A, B, C, D)
+                    const opsiTeracak = shuffleArray(shuffleArray(semuaOpsi));
+                    return {
+                        pertanyaan: poin.pertanyaan,
+                        jawabanBenar: poin.jawabanBenar,
+                        opsi: opsiTeracak,
+                        jawabanSiswa: null
+                    };
+                })
+            }));
+
+            sc2CurrentIndex = 0;
+            document.getElementById('study-case-view').classList.add('hidden');
+            document.getElementById('sc2-result-body').classList.add('hidden');
+            document.getElementById('sc2-progress-header').classList.remove('hidden');
+            document.getElementById('sc2-quiz-body').classList.remove('hidden');
+            document.getElementById('study-case-2-view').classList.remove('hidden');
+
+            renderStudiKasus2();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Merender kasus aktif beserta sub-soal pilihan ganda di Studi Kasus 2
+         */
+        function renderStudiKasus2() {
+            const kasus = sc2ActiveData[sc2CurrentIndex];
+            const total = sc2ActiveData.length;
+
+            document.getElementById('sc2-progress-label').textContent = `Kasus ${kasus.nomor} dari ${total}`;
+            document.getElementById('sc2-progress-bar').style.width = `${((sc2CurrentIndex + 1) / total) * 100}%`;
+
+            const badge = document.getElementById('sc2-difficulty-badge');
+            badge.textContent = `Tingkat: ${kasus.tingkat}`;
+            badge.className = `text-[11px] font-bold px-2.5 py-0.5 rounded-full ${kasus.badgeClass}`;
+
+            document.getElementById('sc2-case-title').textContent = kasus.judul;
+            document.getElementById('sc2-case-stimulus').innerHTML = kasus.stimulus;
+            document.getElementById('sc2-warning-msg').classList.add('hidden');
+
+            const container = document.getElementById('sc2-subquestions-container');
+            container.innerHTML = '';
+
+            const hurufOpsi = ['A', 'B', 'C', 'D'];
+
+            kasus.poinSoal.forEach((poin, poinIdx) => {
+                const card = document.createElement('div');
+                card.className = 'bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 space-y-3';
+
+                const qTitle = document.createElement('p');
+                qTitle.className = 'text-sm sm:text-base font-bold text-gray-900';
+                qTitle.textContent = poin.pertanyaan;
+                card.appendChild(qTitle);
+
+                const optionsGrid = document.createElement('div');
+                optionsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2.5';
+
+                poin.opsi.forEach((teksOpsi, opsiIdx) => {
+                    const isSelected = poin.jawabanSiswa === teksOpsi;
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.onclick = () => pilihJawabanSc2(poinIdx, teksOpsi);
+                    btn.className = isSelected
+                        ? 'text-left px-3.5 py-2.5 rounded-xl border-2 border-indigo-600 bg-indigo-50 text-indigo-950 font-bold text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer shadow-sm'
+                        : 'text-left px-3.5 py-2.5 rounded-xl border border-gray-300 bg-white hover:border-indigo-400 hover:bg-indigo-50/40 text-gray-800 font-medium text-xs sm:text-sm flex items-center gap-2.5 transition-all cursor-pointer';
+
+                    btn.innerHTML = `
+                        <span class="w-6 h-6 shrink-0 rounded-lg flex items-center justify-center text-xs font-extrabold ${isSelected ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}">
+                            ${hurufOpsi[opsiIdx]}
+                        </span>
+                        <span class="leading-snug">${teksOpsi}</span>
+                    `;
+                    optionsGrid.appendChild(btn);
+                });
+
+                card.appendChild(optionsGrid);
+                container.appendChild(card);
+            });
+
+            document.getElementById('sc2-prev-btn').disabled = sc2CurrentIndex === 0;
+            const nextBtn = document.getElementById('sc2-next-btn');
+            nextBtn.textContent = sc2CurrentIndex === total - 1
+                ? 'Selesai & Lihat Hasil KKTP ✓'
+                : `Lanjut ke Kasus ${kasus.nomor + 1} →`;
+        }
+
+        /**
+         * Menyimpan pilihan jawaban siswa pada sub-soal tertentu
+         */
+        function pilihJawabanSc2(poinIndex, nilaiJawaban) {
+            sc2ActiveData[sc2CurrentIndex].poinSoal[poinIndex].jawabanSiswa = nilaiJawaban;
+            renderStudiKasus2();
+        }
+
+        /**
+         * Pindah ke kasus berikutnya atau tampilkan hasil KKTP jika berada di kasus terakhir
+         */
+        function selanjutnyaStudiKasus2() {
+            const kasusAktif = sc2ActiveData[sc2CurrentIndex];
+            const belumLengkap = kasusAktif.poinSoal.some(p => p.jawabanSiswa === null);
+
+            if (belumLengkap) {
+                const warn = document.getElementById('sc2-warning-msg');
+                warn.classList.remove('hidden');
+                warn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                return;
+            }
+
+            if (sc2CurrentIndex < sc2ActiveData.length - 1) {
+                sc2CurrentIndex++;
+                renderStudiKasus2();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                tampilkanHasilKKTP();
+            }
+        }
+
+        /**
+         * Kembali ke kasus sebelumnya di Studi Kasus 2
+         */
+        function sebelumnyaStudiKasus2() {
+            if (sc2CurrentIndex > 0) {
+                sc2CurrentIndex--;
+                renderStudiKasus2();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        /**
+         * Menghitung skor akhir dan menampilkan Hasil Pekerjaan beserta Deskripsi KKTP
+         */
+        function tampilkanHasilKKTP() {
+            let totalPoin = 0;
+            let totalBenar = 0;
+
+            sc2ActiveData.forEach(kasus => {
+                kasus.poinSoal.forEach(poin => {
+                    totalPoin++;
+                    if (poin.jawabanSiswa === poin.jawabanBenar) {
+                        totalBenar++;
+                    }
+                });
+            });
+
+            const nilaiAkhir = Math.round((totalBenar / totalPoin) * 100);
+
+            document.getElementById('sc2-score-correct').textContent = `${totalBenar} / ${totalPoin}`;
+            document.getElementById('sc2-score-value').textContent = nilaiAkhir;
+
+            // Penentuan Interval & Deskripsi Capaian KKTP (Kriteria Ketercapaian Tujuan Pembelajaran)
+            let predikat = '';
+            let deskripsi = '';
+            let tindakLanjut = '';
+            let statusCardClass = '';
+            let descBoxClass = '';
+
+            if (nilaiAkhir >= 86) {
+                predikat = 'Sangat Baik (Tuntas Optimal)';
+                deskripsi = 'Peserta didik telah mencapai ketuntasan belajar secara optimal dan mampu menganalisis seluruh langkah perhitungan konsumsi daya listrik (Wh ke kWh), siklus kerja perangkat, hingga estimasi tagihan listrik beserta pajak (PPJ) secara mandiri dan akurat.';
+                tindakLanjut = 'Tindak Lanjut KKTP: Tuntas — Dapat diberikan pengayaan audit energi tingkat lanjut.';
+                statusCardClass = 'bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center text-emerald-800';
+                descBoxClass = 'rounded-2xl p-5 border border-emerald-200 bg-emerald-50/70 text-emerald-950 space-y-2';
+            } else if (nilaiAkhir >= 75) {
+                predikat = 'Baik (Sudah Mencapai KKTP)';
+                deskripsi = 'Peserta didik sudah mencapai Kriteria Ketercapaian Tujuan Pembelajaran (KKTP) dalam menghitung energi listrik dan biaya pemakaian rumah tangga, meskipun masih memerlukan ketelitian lebih pada kasus kompleks multi-perangkat.';
+                tindakLanjut = 'Tindak Lanjut KKTP: Tuntas — Tidak perlu remedial, lanjut ke materi berikutnya.';
+                statusCardClass = 'bg-teal-50 border border-teal-200 rounded-2xl p-4 text-center text-teal-800';
+                descBoxClass = 'rounded-2xl p-5 border border-teal-200 bg-teal-50/70 text-teal-950 space-y-2';
+            } else if (nilaiAkhir >= 60) {
+                predikat = 'Cukup (Belum Mencapai KKTP)';
+                deskripsi = 'Peserta didik mulai memahami konsep dasar perhitungan daya dan energi listrik harian (Wh ke kWh), namun masih mengalami kekeliruan dalam mengonversi pemakaian bulanan dan menghitung komponen biaya bertingkat.';
+                tindakLanjut = 'Tindak Lanjut KKTP: Remedial di bagian langkah perhitungan yang belum tuntas.';
+                statusCardClass = 'bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center text-amber-800';
+                descBoxClass = 'rounded-2xl p-5 border border-amber-200 bg-amber-50/70 text-amber-950 space-y-2';
+            } else {
+                predikat = 'Perlu Bimbingan (Belum Tuntas)';
+                deskripsi = 'Peserta didik belum mencapai KKTP dan masih membutuhkan pendampingan dalam memahami hubungan antara daya listrik (Watt), lama pemakaian (jam), konversi ke kWh, serta perkalian tarif dasar listrik.';
+                tindakLanjut = 'Tindak Lanjut KKTP: Bimbingan ulang pada Studi Kasus 1 dan pengerjaan ulang Studi Kasus 2.';
+                statusCardClass = 'bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center text-rose-800';
+                descBoxClass = 'rounded-2xl p-5 border border-rose-200 bg-rose-50/70 text-rose-950 space-y-2';
+            }
+
+            const statusCard = document.getElementById('sc2-kktp-status-card');
+            statusCard.className = statusCardClass;
+            document.getElementById('sc2-kktp-predicate').textContent = predikat;
+
+            const descBox = document.getElementById('sc2-kktp-description-box');
+            descBox.className = descBoxClass;
+            document.getElementById('sc2-kktp-description').textContent = deskripsi;
+            document.getElementById('sc2-kktp-followup').textContent = tindakLanjut;
+
+            document.getElementById('sc2-progress-header').classList.add('hidden');
+            document.getElementById('sc2-quiz-body').classList.add('hidden');
+            document.getElementById('sc2-result-body').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Otomatis kirim NIS dan Predikat ke sheet 'kasus2' di Spreadsheet
+            kirimHasilKeSpreadsheet(predikat);
+        }
+
+        /**
+         * Mengirimkan NIS dan Predikat secara otomatis ke Google Spreadsheet (sheet 'kasus2')
+         */
+        async function kirimHasilKeSpreadsheet(predikat) {
+            const syncStatusEl = document.getElementById('sc2-sync-status');
+            const nisSiswa = verifiedStudent && verifiedStudent.nis ? verifiedStudent.nis : '';
+
+            if (!nisSiswa) {
+                syncStatusEl.textContent = 'NIS tidak terdeteksi, hasil tidak tersimpan ke server.';
+                syncStatusEl.className = 'text-xs sm:text-sm font-semibold text-center rounded-xl py-2 px-3 bg-amber-50 text-amber-800 border border-amber-200';
+                return;
+            }
+
+            try {
+                syncStatusEl.textContent = 'Mengirim NIS dan Predikat ke sheet kasus2...';
+                syncStatusEl.className = 'text-xs sm:text-sm font-semibold text-center rounded-xl py-2 px-3 bg-blue-50 text-blue-700 border border-blue-200';
+
+                const formBody = new URLSearchParams({
+                    action: 'simpan_kasus2',
+                    nis: nisSiswa,
+                    predikat: predikat
+                });
+
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: formBody
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    syncStatusEl.textContent = '✓ Hasil & Predikat berhasil tercatat di Spreadsheet (sheet kasus2).';
+                    syncStatusEl.className = 'text-xs sm:text-sm font-semibold text-center rounded-xl py-2 px-3 bg-emerald-50 text-emerald-800 border border-emerald-200';
+                } else {
+                    syncStatusEl.textContent = 'Gagal menyimpan ke Spreadsheet: ' + (result.message || 'Kesalahan server');
+                    syncStatusEl.className = 'text-xs sm:text-sm font-semibold text-center rounded-xl py-2 px-3 bg-rose-50 text-rose-800 border border-rose-200';
+                }
+            } catch (error) {
+                console.error('Gagal mengirim hasil Studi Kasus 2:', error);
+                syncStatusEl.textContent = 'Gagal terhubung ke Spreadsheet saat menyimpan hasil.';
+                syncStatusEl.className = 'text-xs sm:text-sm font-semibold text-center rounded-xl py-2 px-3 bg-rose-50 text-rose-800 border border-rose-200';
+            }
+        }
+    </script>
+</body>
+</html>
